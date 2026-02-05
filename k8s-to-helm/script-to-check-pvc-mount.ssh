@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo -e "PVC_NAME\t\t\t\tSTATUS\t\t\t\tMOUNTED_BY"
+echo -e "-------------------------------------------------------------------------------------"
+
+pvcs=$(oc get pvc -o jsonpath='{.items[*].metadata.name}')
+
+for pvc in $pvcs; do
+  status=$(oc get pvc $pvc -o jsonpath='{.status.phase}')
+  mounted_by=$(oc get pods -o json | jq -r --arg pvc "$pvc" '.items[] | select(.spec.volumes[].persistentVolumeClaim.claimName == $pvc) | .metadata.name' | paste -sd "," -)
+  
+  if [ -z "$mounted_by" ]; then
+    mounted_by="NOT ATTACHED"
+  fi
+  
+  echo -e "$pvc\t\t\t\t$status\t\t\t\t$mounted_by"
+
+done
+
