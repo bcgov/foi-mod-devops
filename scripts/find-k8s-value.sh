@@ -10,9 +10,10 @@ if [ -z "$NAMESPACES" ]; then
 fi
 
 # Prompt for the target value to search
-read -rp "Enter the specific value to search for [default: F0!@activemq@dm1n]: " TARGET_VALUE
+read -rp "Enter the specific value to search for [example: any keyword, password or username] : " TARGET_VALUE
 if [ -z "$TARGET_VALUE" ]; then
-  TARGET_VALUE="F0!@activemq@dm1n"
+  echo "Error: No value provided. Stopping the script."
+  exit 1
 fi
 
 # We use grep -Fi to do a Fixed-string, case-insensitive search so special characters don't act as regex
