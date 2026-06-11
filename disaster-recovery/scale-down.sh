@@ -15,7 +15,7 @@ scale_environment(){
 
     echo "Found deployments. Starting to scale all deployments with label foidb-disaster-recovery=true to zero."
 
-        for deployment in ${deployments_d7abee}; do
+    for deployment in ${deployments_d7abee}; do
         echo "Scaling '${deployment}' down to 0...."
         oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=0
     done
