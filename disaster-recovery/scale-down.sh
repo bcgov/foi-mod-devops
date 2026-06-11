@@ -3,68 +3,47 @@
 read -p "Make sure you're logged into the Openshift API before proceeding. Proceed (y) or Exit (n): " confirm && [[ $confirm == [yY] ]] || exit 1
 read -p "Enter target database you're recovering (ex// foidb or foi-docreviewer): " database
 read -p "What environment are you targetting? (ex// dev, test or prod): " environment
-
 echo "This is the start of a disaster recovery exercise for $database"
 read -p "To continue scaling all pods down in d7abee and d106d6 that consume $database, proceed (y) or exit (n): " confirm && [[ $confirm == [yY] ]] || exit 1
 
-if [[ "$database" == "foidb" ]]; then
+scale_environment(){
+    echo "turnning off all consumer of the $1 in d7abee-$2."
 
-    echo "Turning off all consumers of the $database in the d7abee-$environment."
-    oc project d7abee-$environment
-    deployments_d7abee=$(oc get deployment -n d7abee-$environment -l foidb-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
+    oc project d7abee-$2
+
+    local deployments_d7abee=$(oc get deployment -n d7abee-$2 -l foidb-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
 
     echo "Found deployments. Starting to scale all deployments with label foidb-disaster-recovery=true to zero."
 
-    for deployment in ${deployments_d7abee}; do
+        for deployment in ${deployments_d7abee}; do
         echo "Scaling '${deployment}' down to 0...."
-        oc scale deployment/"${deployment}" -n d7abee-$environment --replicas=0
+        oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=0
     done
 
     echo "All deployments with label foidb-disaster-recovery=true have been scaled to zero."
 
-    echo "Turning off all consumers of the $database in the d106d6-$environment."
+    echo "Turning off all consumers of the $1 in the d106d6-$2."
 
-    oc project d106d6-$environment
+    oc project d106d6-$2
 
-    deployments_d106d6=$(oc get deployment -n d106d6-$environment -l foidb-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
+    local deployments_d106d6=$(oc get deployment -n d106d6-$2 -l foidb-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
 
     echo "Found deployments. Starting to scall all deployments with label foidb-disaster-recovery=true to zero."
 
     for deployment in $deployments_d106d6; do
         echo "Scaling $deployment down to 0..."
-        oc scale deployment/$deployment -n d106d6-$environment --replicas=0
+        oc scale deployment/$deployment -n d106d6-$2 --replicas=0
     done
 
     echo "All deployments with label foidb-disaster-recovery=true have been scaled to zero."
-fi
+}
 
-if [[ "$database" == "foi-docreviewer" ]]; then
+if [[ "$database" == "foidb" ]]; then
 
-    echo "Turning off all consumers of the $database in the d7abee-$environment."
-    oc project d7abee-$environment
-    deployments_d7abee=$(oc get deployment -n d7abee-$environment -l docreviewer-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
+    scale_environment "$database" "$environment"
 
-    echo "Found deployments. Starting to scale all deployments with label docreviewer-disaster-recovery=true to zero."
+elif [[ "$database" == "foi-docreviewer" ]]; then
 
-    for deployment in ${deployments_d7abee}; do
-        echo "Scaling '${deployment}' down to 0...."
-        oc scale deployment/"${deployment}" -n d7abee-$environment --replicas=0
-    done
+    scale_environment "$database" "$environment"
 
-    echo "All deployments with label docreviewer-disaster-recovery=true in d7abee-$environment have been scaled to zero."
-
-    echo "Turning off all consumers of the $database in the d106d6-$environment."
-
-    oc project d106d6-$environment
-
-    deployments_d106d6=$(oc get deployment -n d106d6-$environment -l docreviewer-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
-
-    echo "Found deployments. Starting to scale all deployments with label docreviewer-disaster-recovery=true to zero."
-
-    for deployment in $deployments_d106d6; do
-        echo "Scaling $deployment down to 0..."
-        oc scale deployment/$deployment -n d106d6-$environment --replicas=0
-    done
-
-    echo "All deployments with label docreviewer-disaster-recovery=true have been scaled to zero."
 fi
