@@ -15,9 +15,13 @@ scale_environment(){
 
     echo "Found deployments. Starting to scale all deployments with label foidb-disaster-recovery=true to one."
 
-        for deployment in ${deployments_d7abee}; do
-        echo "Scaling '${deployment}' down to 0...."
-        oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=1
+    for deployment in ${deployments_d7abee}; do
+        echo "Scaling '${deployment}' down to 1...."
+        if [[ "$deployment" == "reviewer-documentservice" && $2 == "prod" ]]; then
+            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=10
+        else
+            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=1
+        fi 
     done
 
     echo "All deployments with label foidb-disaster-recovery=true have been scaled to one."
@@ -31,8 +35,12 @@ scale_environment(){
     echo "Found deployments. Starting to scall all deployments with label foidb-disaster-recovery=true to one."
 
     for deployment in $deployments_d106d6; do
-        echo "Scaling $deployment down to 0..."
-        oc scale deployment/$deployment -n d106d6-$2 --replicas=1
+        echo "Scaling '${deployment}' down to 1...."
+        if [[ "$deployment" == "reviewer-documentservice" && $2 == "prod" ]]; then
+            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=10
+        else
+            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=1
+        fi
     done
 
     echo "All deployments with label foidb-disaster-recovery=true have been scaled to one."
