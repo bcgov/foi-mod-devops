@@ -11,39 +11,31 @@ scale_environment(){
 
     oc project d7abee-$2
 
-    local deployments_d7abee=$(oc get deployment -n d7abee-$2 -l foidb-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
+    local deployments_d7abee=$(oc get deployment -n d7abee-$2 -l $database-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
 
-    echo "Found deployments. Starting to scale all deployments with label foidb-disaster-recovery=true to one."
+    echo "Found deployments. Starting to scale all deployments with label $database-disaster-recovery=true to one."
 
     for deployment in ${deployments_d7abee}; do
-        echo "Scaling '${deployment}' down to 1...."
-        if [[ "$deployment" == "reviewer-documentservice" && $2 == "prod" ]]; then
-            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=10
-        else
-            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=1
-        fi 
+        echo "Scaling '${deployment}' up to 1...."
+        oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=1
     done
 
-    echo "All deployments with label foidb-disaster-recovery=true have been scaled to one."
+    echo "All deployments with label $database-disaster-recovery=true have been scaled to one."
 
     echo "Turning off all consumers of the $1 in the d106d6-$2."
 
     oc project d106d6-$2
 
-    local deployments_d106d6=$(oc get deployment -n d106d6-$2 -l foidb-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
+    local deployments_d106d6=$(oc get deployment -n d106d6-$2 -l $database-disaster-recovery=true -o jsonpath='{.items[*].metadata.name}')
 
-    echo "Found deployments. Starting to scall all deployments with label foidb-disaster-recovery=true to one."
+    echo "Found deployments. Starting to scale all deployments with label $database-disaster-recovery=true to one."
 
     for deployment in $deployments_d106d6; do
-        echo "Scaling '${deployment}' down to 1...."
-        if [[ "$deployment" == "reviewer-documentservice" && $2 == "prod" ]]; then
-            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=10
-        else
-            oc scale deployment/"${deployment}" -n d7abee-$2 --replicas=1
-        fi
+        echo "Scaling '${deployment}' up to 1...."
+        oc scale deployment/"${deployment}" -n d106d6-$2 --replicas=1
     done
 
-    echo "All deployments with label foidb-disaster-recovery=true have been scaled to one."
+    echo "All deployments with label $database-disaster-recovery=true have been scaled to one."
 }
 
 if [[ "$database" == "foidb" ]]; then
@@ -53,5 +45,4 @@ if [[ "$database" == "foidb" ]]; then
 elif [[ "$database" == "foi-docreviewer" ]]; then
 
     scale_environment "$database" "$environment"
-
 fi
